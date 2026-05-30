@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WikiDAI — Instant answers from Wikipedia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  *, *::before, *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  /* ═══════════════════════════
+     DESIGN TOKENS (CSS VARS)
+  ═══════════════════════════ */
+  :root {
+    /* Light mode */
+    --bg:               #f8f9fa;
+    --surface:          #ffffff;
+    --surface-2:        #f0f2f5;
+    --border:           #c8ccd1;
+    --border-soft:      #e4e7ec;
+    --text:             #202122;
+    --text-dim:         #54595d;
+    --text-muted:       #a2a9b1;
+    --accent:           #3366cc;
+    --accent-hover:     #2a4b8d;
+    --accent-bg:        #eaf3ff;
+    --accent-ring:      rgba(51,102,204,0.18);
+    --red:              #c0392b;
+    --red-bg:           #fef0ee;
+    --red-border:       #f2c4be;
+    --header-bg:        #ffffff;
+    --header-border:    #e4e7ec;
+    --serif:            'Merriweather', Georgia, 'Times New Roman', serif;
+    --sans:             'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;
+    --shadow-card:      0 1px 4px rgba(0,0,0,0.08), 0 2px 12px rgba(0,0,0,0.04);
+    --shadow-input:     0 0 0 2px var(--accent-ring);
+  }
+
+  [data-theme="dark"] {
+    --bg:               #0f1117;
+    --surface:          #1a1f2e;
+    --surface-2:        #232938;
+    --border:           #363d50;
+    --border-soft:      #2b3145;
+    --text:             #eaecf0;
+    --text-dim:         #9ba7b9;
+    --text-muted:       #5c6680;
+    --accent:           #6699ff;
+    --accent-hover:     #85aaff;
+    --accent-bg:        #162040;
+    --accent-ring:      rgba(102,153,255,0.2);
+    --red:              #ff6b6b;
+    --red-bg:           #2a1515;
+    --red-border:       #4a2020;
+    --header-bg:        #1a1f2e;
+    --header-border:    #2b3145;
+    --shadow-card:      0 1px 4px rgba(0,0,0,0.4), 0 2px 16px rgba(0,0,0,0.25);
+    --shadow-input:     0 0 0 2px var(--accent-ring);
+  }
+
+  /* ═══════════════════════════
+     BASE
+  ═══════════════════════════ */
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    -webkit-font-smoothing: antialiased;
+    transition: background 0.22s ease, color 0.22s ease;
+    line-height: 1.5;
+  }
+
+  /* ═══════════════════════════
+     TOPBAR / NAV
+  ═══════════════════════════ */
+  .site-nav {
+    position: sticky;
+    top: 0;
+    z-index: 200;
+    background: var(--header-bg);
+    border-bottom: 1px solid var(--header-border);
+    box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+    transition: background 0.22s ease, border-color 0.22s ease;
+  }
+
+  .nav-inner {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 0 20px;
+    height: 54px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  /* Brand */
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    text-decoration: none;
+    flex-shrink: 0;
+  }
+
+  .brand-mark {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1.5px solid var(--border-soft);
+    background: var(--surface-2);
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    transition: background 0.2s;
+  }
+
+  .brand-mark svg {
+    width: 17px;
+    height: 17px;
+    color: var(--accent);
+  }
+
+  .brand-name {
+    font-family: var(--serif);
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.3px;
+  }
+
+  .brand-pill {
+    font-family: var(--sans);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: var(--accent-bg);
+    border: 1px solid rgba(51,102,204,0.25);
+    border-radius: 4px;
+    padding: 2px 6px;
+    line-height: 1.6;
+    margin-top: 1px;
+    transition: background 0.2s, border-color 0.2s;
+  }
+
+  [data-theme="dark"] .brand-pill {
+    border-color: rgba(102,153,255,0.25);
+  }
+
+  /* Nav right */
+  .nav-right {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .nav-caption {
+    font-size: 13px;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+
+  @media (max-width: 520px) { .nav-caption { display: none; } }
+
+  /* Theme toggle button */
+  .theme-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    border: 1px solid var(--border-soft);
+    background: var(--surface-2);
+    color: var(--text-dim);
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+    flex-shrink: 0;
+  }
+
+  .theme-btn:hover {
+    background: var(--accent-bg);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .theme-btn svg { width: 16px; height: 16px; pointer-events: none; }
+
+  /* Show sun in dark, moon in light */
+  .icon-sun  { display: none; }
+  .icon-moon { display: block; }
+  [data-theme="dark"] .icon-sun  { display: block; }
+  [data-theme="dark"] .icon-moon { display: none; }
+
+  /* ═══════════════════════════
+     HERO BAND
+  ═══════════════════════════ */
+  .hero {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border-soft);
+    padding: 52px 24px 44px;
+    text-align: center;
+    transition: background 0.22s ease, border-color 0.22s ease;
+  }
+
+  .hero-eyebrow {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 12px;
+  }
+
+  .hero-title {
+    font-family: var(--serif);
+    font-size: clamp(26px, 5.5vw, 42px);
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.5px;
+    line-height: 1.2;
+    margin-bottom: 12px;
+  }
+
+  .hero-sub {
+    color: var(--text-dim);
+    font-size: 15px;
+    line-height: 1.65;
+    max-width: 430px;
+    margin: 0 auto;
+  }
+
+  /* ═══════════════════════════
+     MAIN LAYOUT
+  ═══════════════════════════ */
+  .page-main {
+    flex: 1;
+    max-width: 780px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 32px 20px 56px;
+  }
+
+  /* ═══════════════════════════
+     CARDS
+  ═══════════════════════════ */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: 10px;
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+    transition: background 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease;
+  }
+
+  /* ═══════════════════════════
+     SEARCH CARD
+  ═══════════════════════════ */
+  .search-card {
+    padding: 22px;
+    margin-bottom: 22px;
+  }
+
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  /* Search input row */
+  .input-row {
+    display: flex;
+    align-items: center;
+    background: var(--bg);
+    border: 1.5px solid var(--border);
+    border-radius: 7px;
+    padding: 0 14px;
+    transition: border-color 0.18s, box-shadow 0.18s;
+  }
+
+  .input-row:focus-within {
+    border-color: var(--accent);
+    box-shadow: var(--shadow-input);
+  }
+
+  .input-row .search-icon {
+    width: 17px;
+    height: 17px;
+    color: var(--text-muted);
+    flex-shrink: 0;
+    margin-right: 10px;
+  }
+
+  #query {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-size: 15px;
+    font-family: var(--sans);
+    padding: 14px 0;
+    width: 100%;
+    caret-color: var(--accent);
+  }
+
+  #query::placeholder { color: var(--text-muted); }
+
+  /* Controls row */
+  .controls {
+    display: flex;
+    gap: 10px;
+  }
+
+  select {
+    background: var(--bg);
+    border: 1.5px solid var(--border);
+    color: var(--text);
+    padding: 10px 14px;
+    border-radius: 7px;
+    font-size: 13.5px;
+    font-family: var(--sans);
+    font-weight: 500;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.18s, box-shadow 0.18s;
+    min-width: 155px;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23a2a9b1' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 32px;
+  }
+
+  select:focus {
+    border-color: var(--accent);
+    box-shadow: var(--shadow-input);
+  }
+
+  option {
+    background: var(--surface);
+    color: var(--text);
+  }
+
+  /* Search button */
+  #searchBtn {
+    flex: 1;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 7px;
+    font-size: 14px;
+    font-family: var(--sans);
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    transition: background 0.16s, box-shadow 0.16s, transform 0.1s;
+    position: relative;
+    overflow: hidden;
+    white-space: nowrap;
+    letter-spacing: 0.01em;
+  }
+
+  #searchBtn:hover {
+    background: var(--accent-hover);
+    box-shadow: 0 3px 12px rgba(51,102,204,0.28);
+  }
+
+  #searchBtn:active { transform: translateY(1px); }
+
+  #searchBtn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  #searchBtn svg {
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+  }
+
+  /* Button loading state */
+  #searchBtn.loading .btn-text,
+  #searchBtn.loading svg { opacity: 0; }
+
+  #searchBtn.loading::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255,255,255,0.35);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.65s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ═══════════════════════════
+     LOADER CARD
+  ═══════════════════════════ */
+  .loader-card {
+    padding: 44px 32px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    animation: slideUp 0.3s ease;
+  }
+
+  .spinner {
+    width: 36px;
+    height: 36px;
+    border: 2.5px solid var(--border-soft);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  .loader-card p {
+    color: var(--text-dim);
+    font-size: 14px;
+  }
+
+  /* ═══════════════════════════
+     RESULT CARD
+  ═══════════════════════════ */
+  .result-card {
+    padding: 0;
+    animation: slideUp 0.35s ease;
+    box-shadow: var(--shadow-card);
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Wikipedia-style result header with serif title */
+  .result-head {
+    padding: 24px 26px 18px;
+    border-bottom: 1px solid var(--border-soft);
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+  }
+
+  .result-meta {
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* Tiny "From Wikipedia" label */
+  .result-source-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 7px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .result-source-label svg {
+    width: 12px;
+    height: 12px;
+    color: var(--accent);
+  }
+
+  #resTitle {
+    font-family: var(--serif);
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.3;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+
+  .res-desc {
+    color: var(--text-dim);
+    font-size: 14px;
+    font-style: italic;
+    font-family: var(--serif);
+    line-height: 1.5;
+  }
+
+  .thumb-wrap {
+    width: 100px;
+    height: 100px;
+    border-radius: 7px;
+    overflow: hidden;
+    flex-shrink: 0;
+    background: var(--surface-2);
+    border: 1px solid var(--border-soft);
+  }
+
+  .thumb-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  /* Body text */
+  .result-body {
+    padding: 20px 26px 22px;
+    border-bottom: 1px solid var(--border-soft);
+  }
+
+  .res-extract {
+    color: var(--text);
+    line-height: 1.78;
+    font-size: 15px;
+  }
+
+  /* Footer */
+  .result-foot {
+    padding: 16px 26px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .wiki-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--accent-bg);
+    color: var(--accent);
+    border: 1px solid rgba(51,102,204,0.22);
+    padding: 8px 16px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 13.5px;
+    font-family: var(--sans);
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+    white-space: nowrap;
+  }
+
+  .wiki-btn:hover {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+
+  [data-theme="dark"] .wiki-btn {
+    border-color: rgba(102,153,255,0.25);
+  }
+
+  [data-theme="dark"] .wiki-btn:hover {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .wiki-btn svg { width: 13px; height: 13px; flex-shrink: 0; }
+
+  .foot-note {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  /* ═══════════════════════════
+     ERROR CARD
+  ═══════════════════════════ */
+  .error-card {
+    text-align: center;
+    padding: 56px 32px;
+    animation: slideUp 0.35s ease;
+  }
+
+  .error-symbol {
+    width: 52px;
+    height: 52px;
+    margin: 0 auto 18px;
+    background: var(--red-bg);
+    border: 1px solid var(--red-border);
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    color: var(--red);
+    font-size: 24px;
+    font-weight: 800;
+    font-family: var(--serif);
+    line-height: 1;
+  }
+
+  .error-card h3 {
+    font-family: var(--serif);
+    font-size: 19px;
+    font-weight: 700;
+    margin-bottom: 10px;
+    color: var(--text);
+  }
+
+  .error-card p {
+    color: var(--text-dim);
+    line-height: 1.65;
+    font-size: 14.5px;
+    max-width: 380px;
+    margin: 0 auto;
+  }
+
+  /* ═══════════════════════════
+     FOOTER
+  ═══════════════════════════ */
+  .site-footer {
+    text-align: center;
+    padding: 24px 20px;
+    color: var(--text-muted);
+    font-size: 13px;
+    border-top: 1px solid var(--border-soft);
+    background: var(--surface);
+    transition: background 0.22s ease, border-color 0.22s ease;
+  }
+
+  .site-footer a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+
+  .site-footer a:hover { text-decoration: underline; }
+
+  .sep {
+    display: inline-block;
+    margin: 0 8px;
+    color: var(--border);
+  }
+
+  /* ═══════════════════════════
+     UTILITY
+  ═══════════════════════════ */
+  .hidden { display: none !important; }
+
+  /* ═══════════════════════════
+     RESPONSIVE
+  ═══════════════════════════ */
+  @media (max-width: 580px) {
+    .hero { padding: 36px 18px 30px; }
+    .page-main { padding: 22px 14px 44px; }
+    .search-card { padding: 16px; }
+    .controls { flex-direction: column; }
+    select { width: 100%; }
+    .result-head { flex-direction: column-reverse; gap: 14px; }
+    .thumb-wrap { width: 100%; height: 170px; border-radius: 6px; }
+    #resTitle { font-size: 19px; }
+    .result-head, .result-body, .result-foot { padding-left: 18px; padding-right: 18px; }
+    .loader-card, .error-card { padding: 36px 18px; }
+    .nav-inner { padding: 0 14px; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- ════════ STICKY NAV ════════ -->
+  <nav class="site-nav">
+    <div class="nav-inner">
+      <a class="brand" href="#">
+        <div class="brand-mark">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13
+                 C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13
+                 C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13
+                 C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+          </svg>
+        </div>
+        <span class="brand-name">WikiDAI</span>
+        <span class="brand-pill">AI</span>
+      </a>
+
+      <div class="nav-right">
+        <span class="nav-caption">Powered by Wikipedia</span>
+        <button class="theme-btn" id="themeToggle" type="button" title="Toggle dark / light mode">
+          <!-- Sun icon (shown in dark mode) -->
+          <svg class="icon-sun" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707
+                 M6.343 17.657l-.707.707m12.728 0l-.707-.707
+                 M6.343 6.343l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z"/>
+          </svg>
+          <!-- Moon icon (shown in light mode) -->
+          <svg class="icon-moon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M20.354 15.354A9 9 0 018.646 3.646
+                 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ════════ HERO ════════ -->
+  <div class="hero">
+    <p class="hero-eyebrow">Free Knowledge</p>
+    <h1 class="hero-title">WikiDAI</h1>
+    <p class="hero-sub">Ask anything — get instant answers sourced directly from Wikipedia.</p>
+  </div>
+
+  <!-- ════════ MAIN ════════ -->
+  <main class="page-main">
+
+    <!-- Search card -->
+    <section class="card search-card">
+      <form id="searchForm">
+        <div class="input-row">
+          <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+          <input id="query" type="text"
+                 placeholder="Search anything… e.g. Eiffel Tower"
+                 autocomplete="off" required>
+        </div>
+        <div class="controls">
+          <select id="lang" aria-label="Wikipedia Language">
+            <option value="en" selected>English — en</option>
+            <option value="hi">Hindi — hi</option>
+            <option value="ur">Urdu — ur</option>
+          </select>
+          <button type="submit" id="searchBtn">
+            <span class="btn-text">Search Wikipedia</span>
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+            </svg>
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Loader -->
+    <section id="loader" class="card loader-card hidden">
+      <div class="spinner"></div>
+      <p>Searching Wikipedia…</p>
+    </section>
+
+    <!-- Results -->
+    <section id="results" class="card result-card hidden">
+      <div class="result-head">
+        <div class="result-meta">
+          <div class="result-source-label">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13
+                   C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13
+                   C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13
+                   C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+            </svg>
+            From Wikipedia
+          </div>
+          <h2 id="resTitle"></h2>
+          <p id="resDesc" class="res-desc"></p>
+        </div>
+        <div id="resThumbWrap" class="thumb-wrap hidden">
+          <img id="resThumb" alt="">
+        </div>
+      </div>
+
+      <div class="result-body">
+        <p id="resExtract" class="res-extract"></p>
+      </div>
+
+      <div class="result-foot">
+        <a id="resLink" href="#" target="_blank" rel="noopener" class="wiki-btn">
+          Read full article
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+          </svg>
+        </a>
+        <span class="foot-note">Via Wikipedia API</span>
+      </div>
+    </section>
+
+    <!-- Error -->
+    <section id="error" class="card error-card hidden">
+      <div class="error-symbol">!</div>
+      <h3>Nothing found</h3>
+      <p>No results for that topic. Please check the spelling or try a different search term.</p>
+    </section>
+
+  </main>
+
+  <!-- ════════ FOOTER ════════ -->
+  <footer class="site-footer">
+    Made with ❤️
+    <span class="sep">·</span>
+    Data from <a href="https://wikipedia.org" target="_blank" rel="noopener">Wikipedia</a>
+    <span class="sep">·</span>
+    WikiDAI
+  </footer>
+
+
+<script>
+  /* ── THEME ── */
+  const html      = document.documentElement;
+  const themeBtn  = document.getElementById('themeToggle');
+
+  // On first load: honour saved pref, then OS pref, then default light
+  (function () {
+    const saved   = localStorage.getItem('wikidai-theme');
+    const sysDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    html.setAttribute('data-theme', saved || (sysDark ? 'dark' : 'light'));
+  })();
+
+  themeBtn.addEventListener('click', () => {
+    const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    html.setAttribute('data-theme', next);
+    localStorage.setItem('wikidai-theme', next);
+  });
+
+  /* ── SEARCH — original logic, completely unchanged ── */
+  const searchForm = document.getElementById('searchForm');
+  const queryEl    = document.getElementById('query');
+  const langEl     = document.getElementById('lang');
+  const loader     = document.getElementById('loader');
+  const results    = document.getElementById('results');
+  const errorBox   = document.getElementById('error');
+  const searchBtn  = document.getElementById('searchBtn');
+
+  queryEl.focus();
+
+  searchForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const q = queryEl.value.trim();
+    if (!q) return;
+    await doSearch(q, langEl.value);
+  });
+
+  async function doSearch(query, lang) {
+    hideAll();
+    loader.classList.remove('hidden');
+    searchBtn.disabled = true;
+    searchBtn.classList.add('loading');
+
+    try {
+      let data = await getSummary(lang, query);
+
+      if (!data || data.type === 'https://mediawiki.org/wiki/HyperSwitch/errors/not_found') {
+        const fallbackTitle = await searchTitle(lang, query);
+        if (fallbackTitle) {
+          data = await getSummary(lang, fallbackTitle);
+        }
+      }
+
+      if (data && data.title && !data.type?.includes('not_found')) {
+        renderResult(data, lang);
+      } else {
+        showError();
+      }
+    } catch (err) {
+      console.error('Search error:', err);
+      showError();
+    } finally {
+      loader.classList.add('hidden');
+      searchBtn.disabled = false;
+      searchBtn.classList.remove('loading');
+    }
+  }
+
+  async function getSummary(lang, title) {
+    try {
+      const url = `https://${lang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`;
+      const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+      if (res.ok) return await res.json();
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
+  async function searchTitle(lang, q) {
+    try {
+      const url = `https://${lang}.wikipedia.org/w/rest.php/v1/search/title?q=${encodeURIComponent(q)}&limit=1`;
+      const res = await fetch(url);
+      if (!res.ok) return null;
+      const json = await res.json();
+      if (json.pages && json.pages.length > 0) {
+        return json.pages[0].title;
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
+  function renderResult(d, lang) {
+    hideAll();
+
+    document.getElementById('resTitle').textContent = d.title || '';
+
+    const descEl = document.getElementById('resDesc');
+    if (d.description) {
+      descEl.textContent = d.description;
+      descEl.style.display = 'block';
+    } else {
+      descEl.style.display = 'none';
+    }
+
+    document.getElementById('resExtract').textContent = d.extract || 'No summary available.';
+
+    const link    = document.getElementById('resLink');
+    const pageUrl = d.content_urls?.desktop?.page
+                 || `https://${lang}.wikipedia.org/wiki/${encodeURIComponent(d.title)}`;
+    link.href = pageUrl;
+
+    const thumbWrap = document.getElementById('resThumbWrap');
+    const thumb     = document.getElementById('resThumb');
+    if (d.thumbnail && d.thumbnail.source) {
+      thumb.src = d.thumbnail.source;
+      thumb.alt = d.title;
+      thumbWrap.classList.remove('hidden');
+    } else {
+      thumbWrap.classList.add('hidden');
+    }
+
+    results.classList.remove('hidden');
+    results.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function hideAll() {
+    results.classList.add('hidden');
+    errorBox.classList.add('hidden');
+    loader.classList.add('hidden');
+  }
+
+  function showError() {
+    hideAll();
+    errorBox.classList.remove('hidden');
+  }
+
+  window.addEventListener('load', () => {
+    queryEl.value = 'Taj Mahal';
+  });
+</script>
+<script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})})();</script>
+</body>
+</html>
